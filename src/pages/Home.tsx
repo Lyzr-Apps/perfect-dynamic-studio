@@ -627,8 +627,39 @@ function SettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 function Dashboard({ history, response }: { history: QueryHistoryItem[]; response: CloudWatchResponse | null }) {
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h')
 
+  // Dummy data for when no real data exists
+  const hasRealData = history.length > 0 || response !== null
+
+  const dummyAnalytics = {
+    totalQueries: 1247,
+    totalLogsAnalyzed: 523891,
+    totalErrors: 234,
+    totalWarnings: 67,
+    totalPatterns: 18,
+    totalAnomalies: 7
+  }
+
+  const dummyTopErrors = [
+    { errorType: 'TimeoutError', count: 87, sample: 'Request to external payment gateway timed out after 30s' },
+    { errorType: 'NullReferenceException', count: 52, sample: 'Unhandled NullReferenceException in OrdersController at line 221' },
+    { errorType: 'DatabaseConnectionError', count: 41, sample: 'Unable to connect to user-db cluster: connection refused' },
+    { errorType: 'AuthenticationFailure', count: 28, sample: 'JWT token validation failed: signature expired' },
+    { errorType: 'RateLimitExceeded', count: 26, sample: 'API rate limit exceeded for endpoint /api/v2/users' }
+  ]
+
+  const dummyRecentActivity = [
+    { query: 'Show me all TimeoutErrors in the last hour', timestamp: new Date(Date.now() - 15 * 60000).toISOString(), logsAnalyzed: 2341, errorCount: 17 },
+    { query: 'Analyze database connection failures today', timestamp: new Date(Date.now() - 45 * 60000).toISOString(), logsAnalyzed: 8923, errorCount: 5 },
+    { query: 'What caused the spike at 2pm?', timestamp: new Date(Date.now() - 2 * 3600000).toISOString(), logsAnalyzed: 15672, errorCount: 42 },
+    { query: 'Search for authentication errors in production', timestamp: new Date(Date.now() - 3 * 3600000).toISOString(), logsAnalyzed: 6234, errorCount: 11 },
+    { query: 'Show API rate limit errors', timestamp: new Date(Date.now() - 5 * 3600000).toISOString(), logsAnalyzed: 3456, errorCount: 8 },
+    { query: 'Find all errors from app-server-2', timestamp: new Date(Date.now() - 6 * 3600000).toISOString(), logsAnalyzed: 12890, errorCount: 23 },
+    { query: 'Analyze memory usage warnings', timestamp: new Date(Date.now() - 8 * 3600000).toISOString(), logsAnalyzed: 4567, errorCount: 0 },
+    { query: 'Show all critical errors in the last 24h', timestamp: new Date(Date.now() - 12 * 3600000).toISOString(), logsAnalyzed: 34521, errorCount: 67 }
+  ]
+
   // Calculate analytics from history and current response
-  const analytics = {
+  const realAnalytics = {
     totalQueries: history.length,
     totalLogsAnalyzed: history.reduce((sum, item) => sum + (item.response?.result?.logs_analyzed || 0), 0) + (response?.result?.logs_analyzed || 0),
     totalErrors: history.reduce((sum, item) => {
@@ -664,15 +695,51 @@ function Dashboard({ history, response }: { history: QueryHistoryItem[]; respons
     }
   })
 
-  const topErrors = Array.from(allErrors.entries())
+  const realTopErrors = Array.from(allErrors.entries())
     .sort((a, b) => b[1].count - a[1].count)
     .slice(0, 5)
 
   // Get recent activity
-  const recentActivity = [...history].reverse().slice(0, 10)
+  const realRecentActivity = [...history].reverse().slice(0, 10)
+
+  // Use dummy or real data
+  const analytics = hasRealData ? realAnalytics : dummyAnalytics
+  const topErrors = hasRealData ? realTopErrors : dummyTopErrors.map(e => [e.errorType, { count: e.count, sample: e.sample }] as const)
+  const recentActivity = hasRealData ? realRecentActivity : dummyRecentActivity
 
   return (
     <div className="flex-1 overflow-auto p-6 space-y-6">
+      {/* Demo Mode Banner */}
+      {!hasRealData && (
+        <div className="bg-gradient-to-r from-[#00FF41]/10 via-cyan-500/10 to-purple-500/10 border border-[#00FF41]/30 rounded-lg p-6">
+          <div className="flex items-start gap-4">
+            <div className="h-12 w-12 rounded-full bg-[#00FF41]/20 flex items-center justify-center flex-shrink-0">
+              <BarChart3 className="h-6 w-6 text-[#00FF41]" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-mono text-lg font-bold text-[#00FF41] mb-2">CloudWatch Log Analytics Dashboard</h3>
+              <p className="font-mono text-sm text-gray-300 mb-3">
+                Real-time insights and analytics for your AWS CloudWatch logs. The data below shows sample metrics from a production environment.
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Server className="h-4 w-4 text-cyan-400" />
+                  <span className="font-mono text-xs text-gray-400">Connected to production-api</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-[#00FF41]" />
+                  <span className="font-mono text-xs text-gray-400">Monitoring active</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-yellow-400" />
+                  <span className="font-mono text-xs text-gray-400">AI-powered analysis ready</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg p-4">
@@ -759,38 +826,37 @@ function Dashboard({ history, response }: { history: QueryHistoryItem[]; respons
             </Badge>
           </div>
 
-          {recentActivity.length === 0 ? (
-            <div className="text-center py-8">
-              <Info className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-              <p className="font-mono text-sm text-gray-400">No queries yet</p>
-              <p className="font-mono text-xs text-gray-500 mt-1">Run a query to get started</p>
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-96 overflow-auto">
-              {recentActivity.map((item, idx) => (
-                <div key={idx} className="bg-[#252525] border border-[#2A2A2A] rounded-md p-3">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <p className="font-mono text-xs text-gray-300 line-clamp-1 flex-1">{item.query}</p>
-                    <span className="font-mono text-xs text-gray-500 flex-shrink-0">
-                      {new Date(item.timestamp).toLocaleTimeString()}
+          <div className="space-y-2 max-h-96 overflow-auto">
+            {recentActivity.map((item: any, idx) => (
+              <div key={idx} className="bg-[#252525] border border-[#2A2A2A] rounded-md p-3">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <p className="font-mono text-xs text-gray-300 line-clamp-1 flex-1">
+                    {hasRealData ? item.query : item.query}
+                  </p>
+                  <span className="font-mono text-xs text-gray-500 flex-shrink-0">
+                    {new Date(item.timestamp).toLocaleTimeString()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="font-mono text-xs text-gray-500">
+                    {hasRealData
+                      ? (item.response?.result?.logs_analyzed?.toLocaleString() || 0)
+                      : item.logsAnalyzed.toLocaleString()
+                    } logs
+                  </span>
+                  {((hasRealData && item.response?.result?.findings?.errors && item.response.result.findings.errors.length > 0) ||
+                    (!hasRealData && item.errorCount > 0)) && (
+                    <span className="font-mono text-xs text-red-400">
+                      {hasRealData
+                        ? item.response.result.findings.errors.reduce((sum: number, e: any) => sum + e.count, 0)
+                        : item.errorCount
+                      } errors
                     </span>
-                  </div>
-                  {item.response && (
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="font-mono text-xs text-gray-500">
-                        {item.response.result?.logs_analyzed?.toLocaleString() || 0} logs
-                      </span>
-                      {item.response.result?.findings?.errors && item.response.result.findings.errors.length > 0 && (
-                        <span className="font-mono text-xs text-red-400">
-                          {item.response.result.findings.errors.reduce((sum, e) => sum + e.count, 0)} errors
-                        </span>
-                      )}
-                    </div>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -857,7 +923,7 @@ function Dashboard({ history, response }: { history: QueryHistoryItem[]; respons
 }
 
 export default function Home() {
-  const [activeView, setActiveView] = useState<'terminal' | 'dashboard'>('terminal')
+  const [activeView, setActiveView] = useState<'terminal' | 'dashboard'>('dashboard')
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [response, setResponse] = useState<CloudWatchResponse | null>(null)
