@@ -740,6 +740,29 @@ function Dashboard({ history, response }: { history: QueryHistoryItem[]; respons
         </div>
       )}
 
+      {/* Time Range Selector */}
+      <div className="flex items-center justify-between">
+        <h2 className="font-mono text-lg font-semibold text-white">Analytics Overview</h2>
+        <div className="flex items-center gap-2 bg-[#252525] rounded-lg p-1">
+          {['1h', '6h', '24h', '7d', '30d'].map((range) => (
+            <Button
+              key={range}
+              variant={selectedTimeRange === range ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setSelectedTimeRange(range)}
+              className={cn(
+                'font-mono text-xs',
+                selectedTimeRange === range
+                  ? 'bg-[#00FF41]/20 text-[#00FF41] hover:bg-[#00FF41]/30'
+                  : 'text-gray-400 hover:text-gray-300 hover:bg-[#2A2A2A]'
+              )}
+            >
+              {range}
+            </Button>
+          ))}
+        </div>
+      </div>
+
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg p-4">
@@ -779,6 +802,128 @@ function Dashboard({ history, response }: { history: QueryHistoryItem[]; respons
         </div>
       </div>
 
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Incident Timeline Chart */}
+        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-mono text-sm font-semibold text-white uppercase flex items-center gap-2">
+              <LineChart className="h-4 w-4 text-cyan-400" />
+              Incident Timeline
+            </h3>
+            <Badge variant="outline" className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 font-mono text-xs">
+              Last {selectedTimeRange}
+            </Badge>
+          </div>
+
+          {/* Simple bar chart visualization */}
+          <div className="space-y-3">
+            {[
+              { time: '00:00', errors: 12, warnings: 5, height: 35 },
+              { time: '04:00', errors: 8, warnings: 3, height: 25 },
+              { time: '08:00', errors: 23, warnings: 12, height: 60 },
+              { time: '12:00', errors: 45, warnings: 18, height: 100 },
+              { time: '16:00', errors: 31, warnings: 14, height: 75 },
+              { time: '20:00', errors: 19, warnings: 7, height: 45 }
+            ].map((item, idx) => (
+              <div key={idx} className="flex items-center gap-3">
+                <span className="font-mono text-xs text-gray-500 w-12">{item.time}</span>
+                <div className="flex-1 flex items-center gap-2">
+                  <div className="flex-1 bg-[#252525] rounded-full h-6 overflow-hidden flex">
+                    <div
+                      className="bg-gradient-to-r from-red-500/80 to-red-500/60 flex items-center justify-end pr-2"
+                      style={{ width: `${item.height}%` }}
+                    >
+                      <span className="font-mono text-xs text-white">{item.errors}</span>
+                    </div>
+                  </div>
+                  <div className="w-16 bg-[#252525] rounded-full h-6 overflow-hidden flex">
+                    <div
+                      className="bg-gradient-to-r from-yellow-500/80 to-yellow-500/60 flex items-center justify-end pr-2"
+                      style={{ width: `${(item.warnings / 20) * 100}%` }}
+                    >
+                      <span className="font-mono text-xs text-white">{item.warnings}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-[#2A2A2A]">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-red-500/80"></div>
+              <span className="font-mono text-xs text-gray-400">Errors</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-yellow-500/80"></div>
+              <span className="font-mono text-xs text-gray-400">Warnings</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Alert Distribution Chart */}
+        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-mono text-sm font-semibold text-white uppercase flex items-center gap-2">
+              <PieChart className="h-4 w-4 text-purple-400" />
+              Alert Distribution
+            </h3>
+            <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/30 font-mono text-xs">
+              By Severity
+            </Badge>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              { label: 'Critical', count: 23, percentage: 28, color: 'red' },
+              { label: 'High', count: 41, percentage: 35, color: 'orange' },
+              { label: 'Medium', count: 52, percentage: 22, color: 'yellow' },
+              { label: 'Low', count: 18, percentage: 15, color: 'blue' }
+            ].map((item, idx) => (
+              <div key={idx}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className={cn(
+                      "h-4 w-4",
+                      item.color === 'red' && "text-red-400",
+                      item.color === 'orange' && "text-orange-400",
+                      item.color === 'yellow' && "text-yellow-400",
+                      item.color === 'blue' && "text-blue-400"
+                    )} />
+                    <span className="font-mono text-xs text-gray-300">{item.label}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-xs text-gray-400">{item.count} alerts</span>
+                    <span className="font-mono text-xs font-semibold text-white w-12 text-right">{item.percentage}%</span>
+                  </div>
+                </div>
+                <div className="w-full bg-[#252525] rounded-full h-2 overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full rounded-full",
+                      item.color === 'red' && "bg-gradient-to-r from-red-500 to-red-600",
+                      item.color === 'orange' && "bg-gradient-to-r from-orange-500 to-orange-600",
+                      item.color === 'yellow' && "bg-gradient-to-r from-yellow-500 to-yellow-600",
+                      item.color === 'blue' && "bg-gradient-to-r from-blue-500 to-blue-600"
+                    )}
+                    style={{ width: `${item.percentage}%` }}
+                  ></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-[#2A2A2A]">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-xs text-gray-400 uppercase">Total Alerts</span>
+              <span className="font-mono text-lg font-bold text-white">134</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Error Patterns and Service Health */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Errors */}
         <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg p-5">
@@ -857,6 +1002,128 @@ function Dashboard({ history, response }: { history: QueryHistoryItem[]; respons
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Service Health Status */}
+        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-mono text-sm font-semibold text-white uppercase flex items-center gap-2">
+              <Server className="h-4 w-4 text-[#00FF41]" />
+              Service Health
+            </h3>
+            <Badge variant="outline" className="bg-[#00FF41]/10 text-[#00FF41] border-[#00FF41]/30 font-mono text-xs">
+              Live Status
+            </Badge>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              { service: 'prod-api/app-server-1', status: 'healthy', uptime: 99.8, requests: 15234 },
+              { service: 'prod-api/app-server-2', status: 'degraded', uptime: 95.2, requests: 12890 },
+              { service: 'prod-api/app-server-3', status: 'healthy', uptime: 99.9, requests: 16721 },
+              { service: 'prod-db/primary', status: 'healthy', uptime: 100, requests: 8956 },
+              { service: 'prod-cache/redis', status: 'healthy', uptime: 99.7, requests: 23451 }
+            ].map((item, idx) => (
+              <div key={idx} className="bg-[#252525] border border-[#2A2A2A] rounded-md p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      "h-2 w-2 rounded-full",
+                      item.status === 'healthy' && "bg-[#00FF41]",
+                      item.status === 'degraded' && "bg-yellow-400",
+                      item.status === 'down' && "bg-red-400"
+                    )}></div>
+                    <span className="font-mono text-xs text-gray-300">{item.service}</span>
+                  </div>
+                  <span className={cn(
+                    "font-mono text-xs font-semibold",
+                    item.status === 'healthy' && "text-[#00FF41]",
+                    item.status === 'degraded' && "text-yellow-400",
+                    item.status === 'down' && "text-red-400"
+                  )}>
+                    {item.uptime}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs text-gray-500">
+                    {item.requests.toLocaleString()} req/min
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Activity className="h-3 w-3 text-cyan-400" />
+                    <span className="font-mono text-xs text-cyan-400 capitalize">{item.status}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-[#2A2A2A] grid grid-cols-2 gap-4">
+            <div>
+              <span className="font-mono text-xs text-gray-400 uppercase block mb-1">Avg Response Time</span>
+              <span className="font-mono text-lg font-bold text-white">142ms</span>
+            </div>
+            <div>
+              <span className="font-mono text-xs text-gray-400 uppercase block mb-1">Error Rate</span>
+              <span className="font-mono text-lg font-bold text-red-400">0.12%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Error Hotspots Map */}
+      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-mono text-sm font-semibold text-white uppercase flex items-center gap-2">
+            <Zap className="h-4 w-4 text-yellow-400" />
+            Error Hotspots
+          </h3>
+          <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30 font-mono text-xs">
+            By Endpoint
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {[
+            { endpoint: '/api/v2/payments/process', errors: 87, severity: 'critical', avgTime: '3.2s' },
+            { endpoint: '/api/v2/users/authenticate', errors: 52, severity: 'high', avgTime: '1.8s' },
+            { endpoint: '/api/v2/orders/create', errors: 41, severity: 'high', avgTime: '2.1s' },
+            { endpoint: '/api/v2/inventory/sync', errors: 28, severity: 'medium', avgTime: '950ms' },
+            { endpoint: '/api/v2/notifications/send', errors: 26, severity: 'medium', avgTime: '720ms' },
+            { endpoint: '/api/v2/reports/generate', errors: 19, severity: 'low', avgTime: '580ms' }
+          ].map((item, idx) => (
+            <div key={idx} className={cn(
+              "bg-[#252525] rounded-md p-3 border",
+              item.severity === 'critical' && "border-red-500/30",
+              item.severity === 'high' && "border-orange-500/30",
+              item.severity === 'medium' && "border-yellow-500/30",
+              item.severity === 'low' && "border-blue-500/30"
+            )}>
+              <div className="flex items-start justify-between mb-2">
+                <span className="font-mono text-xs text-gray-300 line-clamp-1 flex-1">{item.endpoint}</span>
+                <Badge variant="outline" className={cn(
+                  "font-mono text-xs ml-2",
+                  item.severity === 'critical' && "bg-red-500/10 text-red-400 border-red-500/30",
+                  item.severity === 'high' && "bg-orange-500/10 text-orange-400 border-orange-500/30",
+                  item.severity === 'medium' && "bg-yellow-500/10 text-yellow-400 border-yellow-500/30",
+                  item.severity === 'low' && "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                )}>
+                  {item.errors}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-gray-500">Avg: {item.avgTime}</span>
+                <span className={cn(
+                  "font-mono text-xs font-semibold capitalize",
+                  item.severity === 'critical' && "text-red-400",
+                  item.severity === 'high' && "text-orange-400",
+                  item.severity === 'medium' && "text-yellow-400",
+                  item.severity === 'low' && "text-blue-400"
+                )}>
+                  {item.severity}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
