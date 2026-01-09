@@ -265,7 +265,7 @@ function InsightBanner({ response }: { response: CloudWatchResponse }) {
           <div className="text-left">
             <div className="font-mono text-sm font-semibold text-[#00FF41]">AI Analysis Complete</div>
             <div className="font-mono text-xs text-gray-400">
-              {response.result.logs_analyzed.toLocaleString()} logs analyzed • {response.result.findings.errors.length} error types found
+              {response.result?.logs_analyzed?.toLocaleString() || '0'} logs analyzed • {response.result?.findings?.errors?.length || 0} error types found
             </div>
           </div>
         </div>
@@ -281,13 +281,15 @@ function InsightBanner({ response }: { response: CloudWatchResponse }) {
           <Separator className="bg-[#00FF41]/20" />
 
           {/* Summary */}
-          <div>
-            <div className="font-mono text-xs text-gray-400 uppercase mb-2">Summary</div>
-            <p className="font-mono text-sm text-gray-300 leading-relaxed">{response.result.insights.summary}</p>
-          </div>
+          {response.result?.insights?.summary && (
+            <div>
+              <div className="font-mono text-xs text-gray-400 uppercase mb-2">Summary</div>
+              <p className="font-mono text-sm text-gray-300 leading-relaxed">{response.result.insights.summary}</p>
+            </div>
+          )}
 
           {/* Error Types */}
-          {response.result.findings.errors.length > 0 && (
+          {response.result?.findings?.errors && response.result.findings.errors.length > 0 && (
             <div>
               <div className="font-mono text-xs text-gray-400 uppercase mb-2">Error Breakdown</div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -307,7 +309,7 @@ function InsightBanner({ response }: { response: CloudWatchResponse }) {
           )}
 
           {/* Patterns */}
-          {response.result.findings.patterns.length > 0 && (
+          {response.result?.findings?.patterns && response.result.findings.patterns.length > 0 && (
             <div>
               <div className="font-mono text-xs text-gray-400 uppercase mb-2">Patterns Detected</div>
               <div className="space-y-2">
@@ -322,7 +324,7 @@ function InsightBanner({ response }: { response: CloudWatchResponse }) {
           )}
 
           {/* Anomalies */}
-          {response.result.findings.anomalies.length > 0 && (
+          {response.result?.findings?.anomalies && response.result.findings.anomalies.length > 0 && (
             <div>
               <div className="font-mono text-xs text-gray-400 uppercase mb-2">Anomalies</div>
               <div className="space-y-2">
@@ -337,7 +339,7 @@ function InsightBanner({ response }: { response: CloudWatchResponse }) {
           )}
 
           {/* Peak Times */}
-          {response.result.insights.peak_times.length > 0 && (
+          {response.result?.insights?.peak_times && response.result.insights.peak_times.length > 0 && (
             <div>
               <div className="font-mono text-xs text-gray-400 uppercase mb-2">Peak Error Times</div>
               <div className="space-y-2">
@@ -360,7 +362,7 @@ function InsightBanner({ response }: { response: CloudWatchResponse }) {
           )}
 
           {/* Recommendations */}
-          {response.result.insights.recommendations.length > 0 && (
+          {response.result?.insights?.recommendations && response.result.insights.recommendations.length > 0 && (
             <div>
               <div className="font-mono text-xs text-gray-400 uppercase mb-2">Recommendations</div>
               <ul className="space-y-2">
@@ -375,7 +377,7 @@ function InsightBanner({ response }: { response: CloudWatchResponse }) {
           )}
 
           {/* Trends */}
-          {response.result.insights.trends.length > 0 && (
+          {response.result?.insights?.trends && response.result.insights.trends.length > 0 && (
             <div>
               <div className="font-mono text-xs text-gray-400 uppercase mb-2">Trends</div>
               <ul className="space-y-1">
@@ -751,7 +753,7 @@ export default function Home() {
                   <InsightBanner response={response} />
 
                   {/* Log Entries */}
-                  {response.result.formatted_results && response.result.formatted_results.length > 0 && (
+                  {response.result?.formatted_results && response.result.formatted_results.length > 0 && (
                     <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg overflow-hidden">
                       <div className="bg-[#252525] px-4 py-2 border-b border-[#2A2A2A] flex items-center justify-between">
                         <span className="font-mono text-xs text-gray-400 uppercase">Log Entries</span>
